@@ -26,7 +26,6 @@ class User(AbstractUser):
             Profile.objects.create(user=user)
 
 
-
 class Profile(models.Model):
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='profile')
     code = models.CharField(max_length=5, default=f'{random.randrange(10000, 99999)}')
