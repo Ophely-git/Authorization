@@ -62,7 +62,25 @@ class ChangePassword(generics.GenericAPIView):
             return Response({'detail': 'Старый пароль не подходит.'}, status=status.HTTP_400_BAD_REQUEST)
 
 
-# TODO: with Bazhen class ChangeEmail(generics.GenericAPIView):
+class ChangeEmail(generics.GenericAPIView):
+    serializer_class = ChangeEmailSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request, *args, **kwargs):
+        now_user = User.objects.get(pk=decode_token(request))
+        old_email = request.data.get('old_email')
+        new_email = request.data.get('new_email')
+        change_email_user = User.objects.get(email=old_email)
+        if now_user == change_email_user:
+            change_email_user.email = new_email
+            change_email_user.save()
+            serializer = UserListSerializer(change_email_user)
+            return Response({
+                'detail': f'Ваш email изменен.',
+                'user': serializer.data,
+            }, status=status.HTTP_200_OK)
+        else:
+            return Response({'detail': 'Некорректно введен старый email.'}, status=status.HTTP_400_BAD_REQUEST)
 
 
 # TODO: Доделать
@@ -70,4 +88,19 @@ class SendVerificationMail(generics.GenericAPIView):
 
     def post(self, request, *args, **kwargs):
         return Response({'detail': 'ok'})
+
+
+class DeleteUser(generics.GenericAPIView):
+    serializer_class = DeleteUserSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request, *args, **kwargs):
+        user = User.objects.get(pk=decode_token(request))
+        enter_user_password = request.data.get('password')
+        if user.check_password(enter_user_password):
+            user.delete()
+            return Response({'detail': 'Пользователь был успешно удален'},
+                            status=status.HTTP_200_OK)
+        else:
+            return Response({'detail': 'Невверно введен пароль'}, status=status.HTTP_400_BAD_REQUEST)
 

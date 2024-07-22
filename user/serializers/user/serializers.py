@@ -44,3 +44,10 @@ class ChangePasswordSerializer(serializers.Serializer):
         return data
 
 
+class ChangeEmailSerializer(serializers.Serializer):
+    old_email = serializers.EmailField(write_only=True, required=True)
+    new_email = serializers.EmailField(write_only=True, required=True)
+
+
+class DeleteUserSerializer(serializers.Serializer):
+    password = serializers.CharField(write_only=True)
