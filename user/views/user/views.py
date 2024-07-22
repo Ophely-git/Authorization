@@ -23,25 +23,6 @@ class UserList(generics.GenericAPIView):
         return Response({'detail': serializer.data}, status=status.HTTP_200_OK)
 
 
-class Registration(generics.CreateAPIView):
-    serializer_class = RegistrationSerializer
-    permission_classes = [permissions.AllowAny]
-
-    @extend_schema(
-        description=''
-    )
-    def create(self, request, *args, **kwargs):
-        serializer = RegistrationSerializer(data=request.data)
-        if serializer.is_valid(raise_exception=True):
-            serializer.save()
-            return Response({
-                'detail': f'Пользователь {serializer.data["username"]} зарегистрирован.',
-                'user': serializer.data
-            }, status=status.HTTP_200_OK)
-        else:
-            return Response(status=status.HTTP_400_BAD_REQUEST)
-
-
 class ChangePassword(generics.GenericAPIView):
     serializer_class = ChangePasswordSerializer
     permission_classes = [permissions.IsAuthenticated]
