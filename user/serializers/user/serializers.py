@@ -1,6 +1,7 @@
 from django.conf import settings
 from rest_framework import serializers
 from django.core.mail import send_mail
+from django.core.exceptions import ObjectDoesNotExist
 
 from user.models import User
 
@@ -37,28 +38,29 @@ class DeleteUserSerializer(serializers.Serializer):
 
 
 class RegistrationSerializer(serializers.Serializer):
-    password = serializers.CharField( write_only=True)
-    password2 = serializers.CharField( write_only=True)
-    username = serializers.CharField(max_length=40)
-    email = serializers.CharField(max_length=40)
+    username = serializers.CharField(max_length=40, required=True)
+    email = serializers.CharField(max_length=40, required=True)
+    password = serializers.CharField(write_only=True, required=True)
+    password2 = serializers.CharField(write_only=True, required=True)
 
     class Meta:
-        fields = ('username', 'password', 'password2', 'email')
+        fields = ('username', 'email' 'password', 'password2')
 
     def validate(self, data, *args, **kwargs):
-        users = User.objects.get(username=username)
         username = data['username']
-        if data['password'] != data['password2']:
-            raise serializers.ValidationError('Пароли не совпадают.')
-        if username == users:
-            raise serializers.ValidationError('Такой пользователь уже существует.')
-        return data
+        try:
+            users = User.objects.get(username=username)
+            return serializers.ValidationError('Пользователь с таким именем существует.')
+        except ObjectDoesNotExist:
+            if data['password'] != data['password2']:
+                raise serializers.ValidationError('Пароли не совпадают.')
+            return data
     
     def create(self, validated_data):
         user = User.objects.create_user(
             username=validated_data['username'],
             email=validated_data['email'],
-            password=validated_data['password2']
+            password=validated_data['password']
         )
         user.verified = False
         user.save()

@@ -34,7 +34,7 @@ class User(AbstractUser):
             Profile.objects.get(user=user)
         except ObjectDoesNotExist:
             Profile.objects.create(user=user)
-    
+
 
 class Profile(models.Model):
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='profile', verbose_name="Пользователь", blank=True)

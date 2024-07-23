@@ -41,8 +41,6 @@ class Registration(generics.GenericAPIView):
     #TODO не ясно как обработать ошибку когда пользователь с таким username уже существует.
 
 
-
-
 class ChangePassword(generics.GenericAPIView):
     serializer_class = ChangePasswordSerializer
     permission_classes = [permissions.IsAuthenticated]
@@ -105,3 +103,10 @@ class DeleteUser(generics.GenericAPIView):
         else:
             return Response({'detail': 'Невверно введен пароль'}, status=status.HTTP_400_BAD_REQUEST)
 
+
+class Test(generics.GenericAPIView):
+
+    def get(self, request, *args, **kwargs):
+        username = kwargs
+        print(username)
+        return Response({'detail': 'ok'})
