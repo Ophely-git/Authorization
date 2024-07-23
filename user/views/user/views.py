@@ -23,6 +23,26 @@ class UserList(generics.GenericAPIView):
         return Response({'detail': serializer.data}, status=status.HTTP_200_OK)
 
 
+class Registration(generics.GenericAPIView):
+    serializer_class = RegistrationSerializer
+    permission_classes = [permissions.AllowAny]
+
+    def post(self, request, *args, **kwargs):
+        data = request.data
+        
+        serializer=RegistrationSerializer(data=data)
+        if serializer.is_valid():
+            user = serializer.save()
+            username = serializer.validated_data['username']
+            return Response({
+                'detail': f'Пользователь {username} успешно зарегестринован.'
+            }, status=status.HTTP_201_CREATED )
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    #TODO не ясно как обработать ошибку когда пользователь с таким username уже существует.
+
+
+
+
 class ChangePassword(generics.GenericAPIView):
     serializer_class = ChangePasswordSerializer
     permission_classes = [permissions.IsAuthenticated]

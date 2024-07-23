@@ -40,7 +40,7 @@ class Profile(models.Model):
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='profile', verbose_name="Пользователь", blank=True)
     first_name = models.CharField(max_length=100, verbose_name="Имя", blank=True)
     last_name = models.CharField(max_length=100, verbose_name="Фамилия", blank=True)
-    age = models.IntegerField(verbose_name="Возраст", blank=True)
+    age = models.IntegerField(verbose_name="Возраст", blank=True, null=True)
     data_joined = models.DateTimeField(auto_now_add=True, verbose_name="Присоединился", blank=True)
     avatar = models.ImageField(upload_to=upload, default='no_photo.jpg', null=True, blank=True, verbose_name="Аватар")
 

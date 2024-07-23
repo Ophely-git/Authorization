@@ -144,3 +144,14 @@ SIMPLE_JWT = {
     "AUTH_HEADER_TYPES": ("Q",),
     "AUTH_HEADER_NAME": "HTTP_AUTHORIZATION",
 }
+
+#https://docs.djangoproject.com/en/5.0/topics/email/
+#Отправка электронного письма
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+# EMAIL_HOST = 'smtp.your-email-provider.com'
+EMAIL_HOST = 'localhost' #test
+# EMAIL_PORT = 587
+EMAIL_PORT = 1025 #test
+EMAIL_HOST_USER = ''
+EMAIL_HOST_PASSWORD = ''
+#https://docs.djangoproject.com/en/5.0/topics/email/
