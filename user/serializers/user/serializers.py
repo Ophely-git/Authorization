@@ -69,3 +69,21 @@ class RegistrationSerializer(serializers.Serializer):
         message = f'Привет, {user.username}. Подтвердите свою регистрацию по ссылке: http://example.com/verify/{user.username}'
         send_mail(subject, message, settings.EMAIL_HOST_USER, [user.email], fail_silently=False)
         return user
+
+
+class RecoveryPasswordSendEmailSerializer(serializers.Serializer):
+    email = serializers.EmailField(write_only=True, required=True)
+    password = serializers.CharField(write_only=True, required=True)
+
+
+class RecoveryPasswordSerializer(serializers.Serializer):
+    password = serializers.CharField(write_only=True, required=True)
+    password2 = serializers.CharField(write_only=True, required=True)
+
+    def validate(self, attrs):
+        password = attrs.get('password')
+        password2 = attrs.get('password2')
+        if password != password2:
+            raise serializers.ValidationError('Пароли не совпадают')
+        return attrs
+

@@ -5,6 +5,10 @@ from rest_framework import permissions
 from drf_spectacular.utils import extend_schema
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 
+from django.core.mail import send_mail
+import string
+import random
+
 from user.models import User
 from user.serializers.user.serializers import *
 from user.views.another.views import decode_token
@@ -102,6 +106,50 @@ class DeleteUser(generics.GenericAPIView):
                             status=status.HTTP_200_OK)
         else:
             return Response({'detail': 'Невверно введен пароль'}, status=status.HTTP_400_BAD_REQUEST)
+
+
+class RecoveryPasswordSendMail(generics.GenericAPIView):
+    serializer_class = RecoveryPasswordSendEmailSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    @extend_schema(
+        description='Если email и пароль совпадают, отправляется сообщение с ссылкой'
+                    ' на другой URL адрес. Только для авторизованных пользователей.'
+    )
+    def post(self, request, *args, **kwargs):
+        user = User.objects.get(pk=decode_token(request))
+        email = request.data.get('email')
+        password = request.data.get('password')
+        if user.check_password(password) and user.email == email:
+            subject = user.username
+            secret_code = ''.join([random.choice(string.ascii_lowercase + string.digits if i != 5 else string.ascii_uppercase) for i in range(10)])
+            code_send = secret_code + f'{user.pk}' + secret_code
+            message = (f'{subject}, для восстановления пароля перейдите по ссылке'
+                       f'http://127.0.0.1:8000/api/user/recovery-password/{code_send}')
+            # send_mail(subject, message, settings.SEND_HOST_USER, [email])
+            return Response({
+                'detail': f'Письмо {user.username} отправлено на почту {email}'
+            }, status=status.HTTP_200_OK)
+
+
+class RecoveryPassword(generics.GenericAPIView):
+    serializer_class = RecoveryPasswordSerializer
+    permission_classes = [permissions.AllowAny]
+
+    @extend_schema(
+        description='При переходе на эту ссылку API получает секретный код.'
+                    ' Пользователь перешедший по этой ссылке открывает страницу'
+                    ' создания нового пароля.'
+    )
+    def post(self, request, *args, **kwargs):
+        serializer = RecoveryPasswordSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        user_pk = kwargs['code_send'][10:-10]
+        user = User.objects.get(pk=user_pk)
+        user.set_password(serializer.validated_data['password'])
+        return Response({
+            'detail': f'Пользователь {user.username} поменял пароль'
+        }, status=status.HTTP_200_OK)
 
 
 class Test(generics.GenericAPIView):
