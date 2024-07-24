@@ -43,6 +43,7 @@ class LogoutAPI(generics.GenericAPIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def post(self, request, *args, **kwargs):
+        user = User.objects.get(pk=decode_token(request))
         refresh = request.data.get('refresh')
         token = RefreshToken(refresh)
         token.blacklist()
