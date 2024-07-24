@@ -83,7 +83,7 @@ class RecoveryPasswordSerializer(serializers.Serializer):
     def validate(self, attrs):
         password = attrs.get('password')
         password2 = attrs.get('password2')
-        if password != password2:
-            raise serializers.ValidationError('Пароли не совпадают')
+        if password != password2 and len(password) < 8:
+            raise serializers.ValidationError('Пароли не совпадают или меньше 8 символов.')
         return attrs
 

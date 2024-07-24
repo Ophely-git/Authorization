@@ -33,7 +33,6 @@ class GetProfile(generics.GenericAPIView):
     def get(self, request, *args, **kwargs):
         user = User.objects.get(pk=decode_token(request))
         profile = user.profile
-        print(profile)
         serializer = AllProfilesListSerializer(profile, many=False)
         return Response({
             'user': serializer.data

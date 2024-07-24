@@ -130,6 +130,10 @@ class RecoveryPasswordSendMail(generics.GenericAPIView):
             return Response({
                 'detail': f'Письмо {user.username} отправлено на почту {email}'
             }, status=status.HTTP_200_OK)
+        else:
+            return Response({
+                'detail': 'Неверно введен пароль или email.'
+            }, status=status.HTTP_400_BAD_REQUEST)
 
 
 class RecoveryPassword(generics.GenericAPIView):
@@ -145,11 +149,16 @@ class RecoveryPassword(generics.GenericAPIView):
         serializer = RecoveryPasswordSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         user_pk = kwargs['code_send'][10:-10]
-        user = User.objects.get(pk=user_pk)
-        user.set_password(serializer.validated_data['password'])
-        return Response({
-            'detail': f'Пользователь {user.username} поменял пароль'
-        }, status=status.HTTP_200_OK)
+        try:
+            user = User.objects.get(pk=user_pk)
+            user.set_password(serializer.validated_data['password'])
+            return Response({
+                'detail': f'Пользователь {user.username} поменял пароль'
+            }, status=status.HTTP_200_OK)
+        except ObjectDoesNotExist:
+            return Response({
+                'detail': 'Такого пользователя не существует.'
+            }, status=status.HTTP_404_NOT_FOUND)
 
 
 class Test(generics.GenericAPIView):
