@@ -97,15 +97,20 @@ class DeleteUser(generics.GenericAPIView):
     serializer_class = DeleteUserSerializer
     permission_classes = [permissions.IsAuthenticated]
 
+    @extend_schema(
+        description='Удаление пользователя. '
+                    'Для удаления необходимо заполнить правильный текущий пароль.'
+                    ' Только для авторизованных пользователей.'
+    )
     def post(self, request, *args, **kwargs):
         user = User.objects.get(pk=decode_token(request))
         enter_user_password = request.data.get('password')
         if user.check_password(enter_user_password):
             user.delete()
-            return Response({'detail': 'Пользователь был успешно удален'},
+            return Response({'detail': 'Пользователь был успешно удален.'},
                             status=status.HTTP_200_OK)
         else:
-            return Response({'detail': 'Невверно введен пароль'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'detail': 'Неверно введен пароль.'}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class RecoveryPasswordSendMail(generics.GenericAPIView):
