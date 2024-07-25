@@ -131,7 +131,7 @@ class RecoveryPasswordSendMail(generics.GenericAPIView):
             code_send = secret_code + f'{user.pk}' + secret_code
             message = (f'{subject}, для восстановления пароля перейдите по ссылке'
                        f'http://127.0.0.1:8000/api/user/recovery-password/{code_send}')
-            # send_mail(subject, message, settings.SEND_HOST_USER, [email])
+            send_mail(subject, message, settings.EMAIL_HOST_USER, [email])
             return Response({
                 'detail': f'Письмо {user.username} отправлено на почту {email}'
             }, status=status.HTTP_200_OK)

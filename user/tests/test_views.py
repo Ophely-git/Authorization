@@ -53,7 +53,7 @@ class UserAPITest(APITestCase):
         client = APIClient()
         client.credentials(HTTP_AUTHORIZATION='Q ' + access_token)
 
-        response = client.post(self.logout_url, {'refresh': refresh_token})
+        response = client.post(self.logoёut_url, {'refresh': refresh_token})
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.json()['detail'], 'Выход успешен')
