@@ -23,7 +23,11 @@ class ChangePasswordSerializer(serializers.Serializer):
         if data['new_password'] != data['new_password2']:
             raise serializers.ValidationError('Новые пароли не совпадают.')
         if data['new_password'] == data['old_password']:
-            raise serializers.ValidationError('Неверно введен новый пароль.')
+            raise serializers.ValidationError('Новый пароль не может соответствовать старому.')
+        if len(data['new_password']) < 8:
+            raise serializers.ValidationError('Пароль слишком короткий.')
+        if not re.search(r'[!@#$%^&*(),.?":{}|<>]', data['new_password']):
+            raise serializers.ValidationError('Новый пароль должен содержать хотя бы один специальный символ.')
         return data
 
 
@@ -79,7 +83,6 @@ class RegistrationSerializer(serializers.Serializer):
         body = f"Здравствуйте{user.username}, для подтверждения вашей почты, пройдите по следующей ссылке http://localhost:8000/api/user/verified-user-email/{user.username}"
         sender = settings.EMAIL_HOST_USER
         recipients = [user.email]
-
 
         send_mail(subject, body, sender, recipients, fail_silently=False)
         return user

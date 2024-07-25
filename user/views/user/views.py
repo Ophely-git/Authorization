@@ -34,6 +34,13 @@ class ChangePassword(generics.GenericAPIView):
             new_password = request.data.get('new_password')
             user.set_password(new_password)
             user.save()
+
+            subject = "Уведомление о смене пароля"
+            body = f"Здравствуйте {user.username}, ваш пароль был изменён. В случаи если это были не вы, свяжитесь с администрацией. \nС уважением Администрация сайта КрутойСайтОтДимыИБажена.ру"
+            sender = settings.EMAIL_HOST_USER
+            recipients = [user.email]
+            send_mail(subject, body, sender, recipients, fail_silently=False)
+
             return Response({
                 'detail': f'Пользователь {user.username} сменил пароль.'
             }, status=status.HTTP_200_OK)
