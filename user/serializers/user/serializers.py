@@ -4,7 +4,6 @@ from django.core.mail import send_mail
 
 from django.core.exceptions import ObjectDoesNotExist
 import re
-
 from user.models import User
 
 
@@ -40,7 +39,7 @@ class DeleteUserSerializer(serializers.Serializer):
 class RegistrationSerializer(serializers.Serializer):
     username = serializers.CharField(max_length=40)
     email = serializers.EmailField(max_length=40)
-    password = serializers.(write_only=True)
+    password = serializers.CharField(write_only=True)
     password2 = serializers.CharField(write_only=True)
 
     class Meta:
