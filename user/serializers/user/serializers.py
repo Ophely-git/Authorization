@@ -2,6 +2,9 @@ from django.conf import settings
 from rest_framework import serializers
 from django.core.mail import send_mail
 
+from django.core.exceptions import ObjectDoesNotExist
+import re
+
 from user.models import User
 
 
@@ -10,8 +13,6 @@ class UserListSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ['id', 'username', 'email', 'first_name', 'last_name', 'verified']
-        
-
 
 
 class ChangePasswordSerializer(serializers.Serializer):
@@ -37,33 +38,53 @@ class DeleteUserSerializer(serializers.Serializer):
 
 
 class RegistrationSerializer(serializers.Serializer):
-    password = serializers.CharField( write_only=True)
-    password2 = serializers.CharField( write_only=True)
     username = serializers.CharField(max_length=40)
-    email = serializers.CharField(max_length=40)
+    email = serializers.EmailField(max_length=40)
+    password = serializers.(write_only=True)
+    password2 = serializers.CharField(write_only=True)
 
     class Meta:
-        fields = ('username', 'password', 'password2', 'email')
+        fields = ('username', 'email', 'password', 'password2')
 
     def validate(self, data, *args, **kwargs):
-        users = User.objects.get(username=username)
+        password = data['password']
+        password2 = data['password2']
+        email = data['email']
         username = data['username']
-        if data['password'] != data['password2']:
+
+        if User.objects.filter(username=username).exists():
+            raise serializers.ValidationError('Такой юзер уже существует.')
+        if User.objects.filter(email=email).exists():
+            raise serializers.ValidationError('Такой email уже зарегистрирован.')
+        if len(password) < 8:
+            raise serializers.ValidationError('Пароль слишком короткий.')
+        if password != password2:
             raise serializers.ValidationError('Пароли не совпадают.')
-        if username == users:
-            raise serializers.ValidationError('Такой пользователь уже существует.')
+        if not re.search(r'[!@#$%^&*(),.?":{}|<>]', password):
+            raise serializers.ValidationError('Пароль должен содержать хотя бы один специальный символ.')
+    
         return data
+
     
     def create(self, validated_data):
         user = User.objects.create_user(
             username=validated_data['username'],
             email=validated_data['email'],
-            password=validated_data['password2']
+            password=validated_data['password']
         )
+        user.set_password(validated_data['password'])
         user.verified = False
         user.save()
 
-        subject = 'Подтверждение регистрации'
-        message = f'Привет, {user.username}. Подтвердите свою регистрацию по ссылке: http://example.com/verify/{user.username}'
-        send_mail(subject, message, settings.EMAIL_HOST_USER, [user.email], fail_silently=False)
+        subject = "Подтверждение электронной почты"
+        body = f"Здравствуйте{user.username}, для подтверждения вашей почты, пройдите по следующей ссылке http://localhost:8000/api/user/verified-user-email/{user.username}"
+        sender = settings.EMAIL_HOST_USER
+        recipients = [user.email]
+
+
+        send_mail(subject, body, sender, recipients, fail_silently=False)
         return user
+
+
+class VerifieSerializer(serializers.Serializer):
+    code = serializers.CharField(write_only=True, required=True)

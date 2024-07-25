@@ -8,4 +8,5 @@ urlpatterns = [
     path('change-password/', ChangePassword.as_view()),
     path('change-email/', ChangeEmail.as_view()),
     path('delete-user/', DeleteUser.as_view()),
+    path('verified-user-email/<str:username>/', Verifei.as_view()),
 ]

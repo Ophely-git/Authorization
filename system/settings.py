@@ -2,6 +2,8 @@ import os
 from datetime import timedelta
 from pathlib import Path
 
+
+
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = 'django-insecure-snvk*#y805$!7_u$l$(jmz&wdcf=s=20sjqbo%(d7r3h5f%e%8'
@@ -17,6 +19,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+
 ]
 
 # builds
@@ -24,6 +27,10 @@ INSTALLED_APPS += [
     'rest_framework',
     'rest_framework_simplejwt',
     'rest_framework_simplejwt.token_blacklist',
+    'django.contrib.sites',
+
+
+
 ]
 
 # apps
@@ -147,11 +154,13 @@ SIMPLE_JWT = {
 
 #https://docs.djangoproject.com/en/5.0/topics/email/
 #Отправка электронного письма
+
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-# EMAIL_HOST = 'smtp.your-email-provider.com'
-EMAIL_HOST = 'localhost' #test
-# EMAIL_PORT = 587
-EMAIL_PORT = 1025 #test
-EMAIL_HOST_USER = ''
-EMAIL_HOST_PASSWORD = ''
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_USE_TLS = True
+EMAIL_PORT = 587
+EMAIL_HOST_USER = 'bigcookingisland@gmail.com'
+EMAIL_HOST_PASSWORD = 'vmqu tdrt wvak rpfe'
+DEFAULT_FROM_EMAIL = 'bigcookingisland@gmail.com'
 #https://docs.djangoproject.com/en/5.0/topics/email/
+
