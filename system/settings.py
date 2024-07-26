@@ -164,3 +164,4 @@ EMAIL_HOST_PASSWORD = 'vmqu tdrt wvak rpfe'
 DEFAULT_FROM_EMAIL = 'bigcookingisland@gmail.com'
 #https://docs.djangoproject.com/en/5.0/topics/email/
 
+SITE_ID = 1

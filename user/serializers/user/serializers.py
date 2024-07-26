@@ -6,12 +6,40 @@ from django.core.exceptions import ObjectDoesNotExist
 import re
 from user.models import User
 
-
+from user.views.another.views import generate_code
 class UserListSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
         fields = ['id', 'username', 'email', 'first_name', 'last_name', 'verified']
+
+
+class ChangePasswordStepOneSerializer(serializers.Serializer):
+    username = serializers.CharField(write_only=True)
+    email = serializers.EmailField(write_only=True)
+
+    def validate(self, data):
+        username = data.get('username')
+        email = data.get('email')
+
+        if not User.objects.filter(username=username, email=email).exists():
+            raise serializers.ValidationError("Пользователь с таким email и username не найден.")
+
+        return data
+
+    def send_password_reset_email(self):
+        username = self.validated_data['username']
+        email = self.validated_data['email']
+
+        user = User.objects.get(username = username, email = email)
+        user_id = user.pk
+
+        subject = "Смена пароля"
+        body = f"Здравствуйте {username}, пройдите по следующей ссылке для смены пароля http://localhost:8000/api/user/change-password/{generate_code(user_id=user_id)}"
+        sender = settings.EMAIL_HOST_USER
+        recipients = [email]
+
+        send_mail(subject, body, sender, recipients, fail_silently=False)
 
 
 class ChangePasswordSerializer(serializers.Serializer):
@@ -65,10 +93,10 @@ class RegistrationSerializer(serializers.Serializer):
             raise serializers.ValidationError('Пароли не совпадают.')
         if not re.search(r'[!@#$%^&*(),.?":{}|<>]', password):
             raise serializers.ValidationError('Пароль должен содержать хотя бы один специальный символ.')
-    
+
         return data
 
-    
+
     def create(self, validated_data):
         user = User.objects.create_user(
             username=validated_data['username'],
@@ -79,8 +107,9 @@ class RegistrationSerializer(serializers.Serializer):
         user.verified = False
         user.save()
 
+        user_id = user.pk
         subject = "Подтверждение электронной почты"
-        body = f"Здравствуйте{user.username}, для подтверждения вашей почты, пройдите по следующей ссылке http://localhost:8000/api/user/verified-user-email/{user.username}"
+        body = f"Здравствуйте{user.username}, для подтверждения вашей почты, пройдите по следующей ссылке http://localhost:8000/api/user/verified-user-email/{generate_code(user_id=user_id)}"
         sender = settings.EMAIL_HOST_USER
         recipients = [user.email]
 
@@ -90,3 +119,5 @@ class RegistrationSerializer(serializers.Serializer):
 
 class VerifieSerializer(serializers.Serializer):
     code = serializers.CharField(write_only=True, required=True)
+
+

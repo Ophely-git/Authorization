@@ -21,12 +21,27 @@ class UserList(generics.GenericAPIView):
         return Response({'detail': serializer.data}, status=status.HTTP_200_OK)
 
 
+class ChangePasswordStepOne(generics.GenericAPIView):
+    serializer_class = ChangePasswordStepOneSerializer
+    permission_classes = [permissions.AllowAny]
+    def post(self, request):
+        serializer = ChangePasswordStepOneSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.send_password_reset_email()
+            return Response({"message": "Ссылка для смены пароля отправлена на ваш email."}, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+
 class ChangePassword(generics.GenericAPIView):
     serializer_class = ChangePasswordSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.AllowAny]
 
     def post(self, request, *args, **kwargs):
-        user = User.objects.get(pk=decode_token(request))
+        # user = User.objects.get(pk=decode_token(request))
+        user_id_code = kwargs.get('user_id')
+        user_id = user_id_code[8:-16]
+        user = User.objects.get(pk=user_id)
         old_password = request.data.get('old_password')
         if user.check_password(old_password):
             serializer = ChangePasswordSerializer(data=request.data)
@@ -114,8 +129,10 @@ class Verifei(generics.GenericAPIView):
 
     def get(self, request, *args, **kwargs):
 
-        username = kwargs.get('username')
-        user = User.objects.get(username=username)
+        user_id_code = kwargs.get('user_id')
+        user_id = user_id_code[8:-16]
+        user = User.objects.get(pk=user_id)
+        username = user.username
         user.verified = True
         user.save()
 
