@@ -28,7 +28,8 @@ class ChangePasswordStepOne(generics.GenericAPIView):
         serializer = ChangePasswordStepOneSerializer(data=request.data)
         if serializer.is_valid():
             serializer.send_password_reset_email()
-            return Response({"message": "Ссылка для смены пароля отправлена на ваш email."}, status=status.HTTP_200_OK)
+            return Response({"message": "Ссылка для смены пароля отправлена на ваш email."},
+                            status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
@@ -51,7 +52,8 @@ class ChangePassword(generics.GenericAPIView):
             user.save()
 
             subject = "Уведомление о смене пароля"
-            body = f"Здравствуйте {user.username}, ваш пароль был изменён. В случаи если это были не вы, свяжитесь с администрацией. \nС уважением Администрация сайта КрутойСайтОтДимыИБажена.ру"
+            body = (f"Здравствуйте {user.username}, ваш пароль был изменён. В случаи если это были не вы, свяжитесь с администрацией."
+                    f" \nС уважением Администрация сайта КрутойСайтОтДимыИБажена.ру")
             sender = settings.EMAIL_HOST_USER
             recipients = [user.email]
             send_mail(subject, body, sender, recipients, fail_silently=False)
@@ -82,7 +84,8 @@ class ChangeEmail(generics.GenericAPIView):
                 'user': serializer.data,
             }, status=status.HTTP_200_OK)
         else:
-            return Response({'detail': 'Некорректно введен старый email.'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'detail': 'Некорректно введен старый email.'},
+                            status=status.HTTP_400_BAD_REQUEST)
 
 
 # TODO: Доделать
