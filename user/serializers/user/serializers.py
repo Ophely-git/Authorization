@@ -87,3 +87,4 @@ class RecoveryPasswordSerializer(serializers.Serializer):
             raise serializers.ValidationError('Пароли не совпадают или меньше 8 символов.')
         return attrs
 
+
