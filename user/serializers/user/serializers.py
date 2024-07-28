@@ -1,7 +1,6 @@
 from django.conf import settings
 from rest_framework import serializers
 from django.core.mail import send_mail
-
 from django.core.exceptions import ObjectDoesNotExist
 import re
 from user.models import User
@@ -119,5 +118,22 @@ class RegistrationSerializer(serializers.Serializer):
 
 class VerifieSerializer(serializers.Serializer):
     code = serializers.CharField(write_only=True, required=True)
+
+
+class RecoveryPasswordSendEmailSerializer(serializers.Serializer):
+    email = serializers.EmailField(write_only=True, required=True)
+    password = serializers.CharField(write_only=True, required=True)
+
+
+class RecoveryPasswordSerializer(serializers.Serializer):
+    password = serializers.CharField(write_only=True, required=True)
+    password2 = serializers.CharField(write_only=True, required=True)
+
+    def validate(self, attrs):
+        password = attrs.get('password')
+        password2 = attrs.get('password2')
+        if password != password2 and len(password) < 8:
+            raise serializers.ValidationError('Пароли не совпадают или меньше 8 символов.')
+        return attrs
 
 

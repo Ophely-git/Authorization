@@ -2,8 +2,6 @@ import os
 from datetime import timedelta
 from pathlib import Path
 
-
-
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = 'django-insecure-snvk*#y805$!7_u$l$(jmz&wdcf=s=20sjqbo%(d7r3h5f%e%8'
@@ -19,7 +17,6 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-
 ]
 
 # builds
@@ -28,9 +25,6 @@ INSTALLED_APPS += [
     'rest_framework_simplejwt',
     'rest_framework_simplejwt.token_blacklist',
     'django.contrib.sites',
-
-
-
 ]
 
 # apps
@@ -96,6 +90,10 @@ DATABASES = {
     }
 }
 
+AUTHENTICATION_BACKENDS = [
+    'user.backends.UserModelBackend'
+]
+
 AUTH_PASSWORD_VALIDATORS = [
     {
         'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
@@ -154,7 +152,6 @@ SIMPLE_JWT = {
 
 #https://docs.djangoproject.com/en/5.0/topics/email/
 #Отправка электронного письма
-
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_USE_TLS = True
