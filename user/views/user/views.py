@@ -2,7 +2,7 @@ from rest_framework import generics
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework import permissions
-from drf_spectacular.utils import extend_schema
+from drf_spectacular.utils import extend_schema, OpenApiParameter
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 
 from django.core.mail import send_mail
@@ -158,6 +158,7 @@ class RecoveryPasswordSendMail(generics.GenericAPIView):
     permission_classes = [permissions.IsAuthenticated]
 
     @extend_schema(
+        # parameters=[RecoveryPasswordSendEmailSerializer],
         description='Если email и пароль совпадают, отправляется сообщение с ссылкой'
                     ' на другой URL адрес. Только для авторизованных пользователей.'
     )
