@@ -27,30 +27,59 @@ class UserList(generics.GenericAPIView):
         return Response({'detail': serializer.data}, status=status.HTTP_200_OK)
 
 
-class Registration(generics.GenericAPIView):
+class Registration(generics.CreateAPIView):
     serializer_class = RegistrationSerializer
     permission_classes = [permissions.AllowAny]
 
     def post(self, request, *args, **kwargs):
-        data = request.data
-        
-        serializer=RegistrationSerializer(data=data)
+        serializer = RegistrationSerializer(data=request.data)
+
         if serializer.is_valid():
-            user = serializer.save()
+            serializer.save()
             username = serializer.validated_data['username']
             return Response({
                 'detail': f'Пользователь {username} успешно зарегестринован.'
             }, status=status.HTTP_201_CREATED )
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    #TODO не ясно как обработать ошибку когда пользователь с таким username уже существует.
+
+
+class Verifei(generics.GenericAPIView):
+    serializer_class = VerifieSerializer
+    permission_classes = [permissions.AllowAny]
+
+    def get(self, request, *args, **kwargs):
+
+        user_id_code = kwargs.get('user_id')
+        user_id = user_id_code[8:-16]
+        user = User.objects.get(pk=user_id)
+        username = user.username
+        user.verified = True
+        user.save()
+
+        return Response({"detail": f"Пользователь {username} успешно подтвердил email."},
+                        status=status.HTTP_200_OK)
+
+
+class ChangePasswordStepOne(generics.GenericAPIView):
+    serializer_class = ChangePasswordStepOneSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    def post(self, request):
+        serializer = ChangePasswordStepOneSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.send_password_reset_email()
+            return Response({"message": "Ссылка для смены пароля отправлена на ваш email."}, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class ChangePassword(generics.GenericAPIView):
     serializer_class = ChangePasswordSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.AllowAny]
 
     def post(self, request, *args, **kwargs):
-        user = User.objects.get(pk=decode_token(request))
+        # user = User.objects.get(pk=decode_token(request))
+        user_id_code = kwargs.get('user_id')
+        user_id = user_id_code[8:-16]
+        user = User.objects.get(pk=user_id)
         old_password = request.data.get('old_password')
         if user.check_password(old_password):
             serializer = ChangePasswordSerializer(data=request.data)
@@ -58,11 +87,19 @@ class ChangePassword(generics.GenericAPIView):
             new_password = request.data.get('new_password')
             user.set_password(new_password)
             user.save()
+
+            subject = "Уведомление о смене пароля"
+            body = f"Здравствуйте {user.username}, ваш пароль был изменён. В случаи если это были не вы, свяжитесь с администрацией. \nС уважением Администрация сайта КрутойСайтОтДимыИБажена.ру"
+            sender = settings.EMAIL_HOST_USER
+            recipients = [user.email]
+            send_mail(subject, body, sender, recipients, fail_silently=False)
+
             return Response({
                 'detail': f'Пользователь {user.username} сменил пароль.'
             }, status=status.HTTP_200_OK)
         else:
-            return Response({'detail': 'Старый пароль не подходит.'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'detail': 'Старый пароль не подходит.'},
+                            status=status.HTTP_400_BAD_REQUEST)
 
 
 class ChangeEmail(generics.GenericAPIView):

@@ -6,6 +6,8 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework import permissions
 import jwt
 from django.conf import settings
+import random
+import string
 
 from user.models import User
 from user.serializers.another.serializers import *
@@ -15,6 +17,19 @@ def decode_token(request):
     token = str(request.headers.get('Authorization')).split(' ')[1]
     decode = jwt.decode(token, key=settings.SECRET_KEY, algorithms='HS256')
     return decode['user_id']
+
+
+def generate_code(user_id):
+    lenght = 24
+
+
+    characters = string.ascii_letters + string.digits
+
+    code = ''.join(random.choice(characters) for i in range(lenght))
+    code_with_id = code[:8] + str(user_id) + code[8:]
+
+    return code_with_id
+
 
 
 class LoginAPI(generics.GenericAPIView):
