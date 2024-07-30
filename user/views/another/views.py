@@ -31,7 +31,6 @@ def generate_code(user_id):
     return code_with_id
 
 
-
 class LoginAPI(generics.GenericAPIView):
     serializer_class = LoginSerializer
     permission_classes = [permissions.AllowAny]

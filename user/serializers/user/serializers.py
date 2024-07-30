@@ -13,7 +13,7 @@ class UserListSerializer(serializers.ModelSerializer):
         fields = ['id', 'username', 'email', 'first_name', 'last_name', 'verified']
 
 
-class ChangePasswordStepOneSerializer(serializers.Serializer):
+class RecoveryPasswordSendMailSerializer(serializers.Serializer):
     username = serializers.CharField(write_only=True)
     email = serializers.EmailField(write_only=True)
 
@@ -41,7 +41,7 @@ class ChangePasswordStepOneSerializer(serializers.Serializer):
         send_mail(subject, body, sender, recipients, fail_silently=False)
 
 
-class ChangePasswordSerializer(serializers.Serializer):
+class RecoveryPasswordSerializer(serializers.Serializer):
     old_password = serializers.CharField(write_only=True)
     new_password = serializers.CharField(write_only=True)
     new_password2 = serializers.CharField(write_only=True)
@@ -116,16 +116,16 @@ class RegistrationSerializer(serializers.Serializer):
         return user
 
 
-class VerifieSerializer(serializers.Serializer):
+class VerifySerializer(serializers.Serializer):
     code = serializers.CharField(write_only=True, required=True)
 
 
-class RecoveryPasswordSendEmailSerializer(serializers.Serializer):
+class ChangePasswordSendMailSerializer(serializers.Serializer):
     email = serializers.EmailField(write_only=True, required=True)
     password = serializers.CharField(write_only=True, required=True)
 
 
-class RecoveryPasswordSerializer(serializers.Serializer):
+class ChangePasswordSerializer(serializers.Serializer):
     password = serializers.CharField(write_only=True, required=True)
     password2 = serializers.CharField(write_only=True, required=True)
 

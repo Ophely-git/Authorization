@@ -5,7 +5,7 @@ from .views import *
 urlpatterns = [
     path('list_all_users/', UserList.as_view()),
     path('registration/', Registration.as_view()),
-    path('change-password-step-one/', ChangePasswordStepOne.as_view()),
+    path('change-password-send-mail/', ChangePasswordSendMail.as_view()),
     path('change-password/<str:user_id>/', ChangePassword.as_view()),
     path('change-email/', ChangeEmail.as_view()),
     path('delete-user/', DeleteUser.as_view()),

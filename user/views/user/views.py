@@ -44,7 +44,7 @@ class Registration(generics.CreateAPIView):
 
 
 class Verifei(generics.GenericAPIView):
-    serializer_class = VerifieSerializer
+    serializer_class = VerifySerializer
     permission_classes = [permissions.AllowAny]
 
     def get(self, request, *args, **kwargs):
@@ -60,11 +60,17 @@ class Verifei(generics.GenericAPIView):
                         status=status.HTTP_200_OK)
 
 
-class ChangePasswordStepOne(generics.GenericAPIView):
-    serializer_class = ChangePasswordStepOneSerializer
-    permission_classes = [permissions.IsAuthenticated]
+class RecoveryPasswordSendMail(generics.GenericAPIView):
+    serializer_class = RecoveryPasswordSendMailSerializer
+    permission_classes = [permissions.AllowAny]
+
+    @extend_schema(
+        # parameters=[RecoveryPasswordSendEmailSerializer],
+        description='Если email и пароль совпадают, отправляется сообщение с ссылкой'
+                    ' на другой URL адрес. Только для авторизованных пользователей.'
+    )
     def post(self, request):
-        serializer = ChangePasswordStepOneSerializer(data=request.data)
+        serializer = RecoveryPasswordSendMailSerializer(data=request.data)
         if serializer.is_valid():
             serializer.send_password_reset_email()
             return Response({"message": "Ссылка для смены пароля отправлена на ваш email."},
@@ -72,18 +78,17 @@ class ChangePasswordStepOne(generics.GenericAPIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-class ChangePassword(generics.GenericAPIView):
-    serializer_class = ChangePasswordSerializer
+class RecoveryPassword(generics.GenericAPIView):
+    serializer_class = RecoveryPasswordSerializer
     permission_classes = [permissions.AllowAny]
 
     def post(self, request, *args, **kwargs):
-        # user = User.objects.get(pk=decode_token(request))
-        user_id_code = kwargs.get('user_id')
-        user_id = user_id_code[8:-16]
+        user_code = kwargs.get('user_id')
+        user_id = user_code[8:-16]
         user = User.objects.get(pk=user_id)
         old_password = request.data.get('old_password')
         if user.check_password(old_password):
-            serializer = ChangePasswordSerializer(data=request.data)
+            serializer = RecoveryPasswordSerializer(data=request.data)
             serializer.is_valid(raise_exception=True)
             new_password = request.data.get('new_password')
             user.set_password(new_password)
@@ -153,8 +158,8 @@ class DeleteUser(generics.GenericAPIView):
             return Response({'detail': 'Неверно введен пароль.'}, status=status.HTTP_400_BAD_REQUEST)
 
 
-class RecoveryPasswordSendMail(generics.GenericAPIView):
-    serializer_class = RecoveryPasswordSendEmailSerializer
+class ChangePasswordSendMail(generics.GenericAPIView):
+    serializer_class = ChangePasswordSendMailSerializer
     permission_classes = [permissions.IsAuthenticated]
 
     @extend_schema(
@@ -182,8 +187,8 @@ class RecoveryPasswordSendMail(generics.GenericAPIView):
             }, status=status.HTTP_400_BAD_REQUEST)
 
 
-class RecoveryPassword(generics.GenericAPIView):
-    serializer_class = RecoveryPasswordSerializer
+class ChangePassword(generics.GenericAPIView):
+    serializer_class = ChangePasswordSerializer
     permission_classes = [permissions.AllowAny]
 
     @extend_schema(
@@ -192,7 +197,7 @@ class RecoveryPassword(generics.GenericAPIView):
                     ' создания нового пароля.'
     )
     def post(self, request, *args, **kwargs):
-        serializer = RecoveryPasswordSerializer(data=request.data)
+        serializer = ChangePasswordSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         user_pk = kwargs['code_send'][10:-10]
         try:
