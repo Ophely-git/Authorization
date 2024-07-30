@@ -66,8 +66,8 @@ class RecoveryPasswordSendMail(generics.GenericAPIView):
 
     @extend_schema(
         # parameters=[RecoveryPasswordSendEmailSerializer],
-        description='Если email и пароль совпадают, отправляется сообщение с ссылкой'
-                    ' на другой URL адрес. Только для авторизованных пользователей.'
+        description='Если email и Username есть в базе и совпадают, отправляется сообщение с ссылкой'
+                    ' на другой URL адрес. Доступно для всех пользователей.'
     )
     def post(self, request):
         serializer = RecoveryPasswordSendMailSerializer(data=request.data)
@@ -81,6 +81,13 @@ class RecoveryPasswordSendMail(generics.GenericAPIView):
 class RecoveryPassword(generics.GenericAPIView):
     serializer_class = RecoveryPasswordSerializer
     permission_classes = [permissions.AllowAny]
+
+    @extend_schema(
+        # parameters=[RecoveryPasswordSendEmailSerializer],
+        description='При переходе на эту ссылку API получает секретный код.'
+                    ' Пользователь перешедший по этой ссылке открывает страницу'
+                    ' на востановления пароля.'
+    )
 
     def post(self, request, *args, **kwargs):
         user_code = kwargs.get('user_id')
