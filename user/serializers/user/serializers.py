@@ -58,9 +58,13 @@ class RecoveryPasswordSerializer(serializers.Serializer):
         return data
 
 
-class ChangeEmailSerializer(serializers.Serializer):
-    old_email = serializers.EmailField(write_only=True, required=True)
+class ChangeEmailSendMailSerializer(serializers.Serializer):
     new_email = serializers.EmailField(write_only=True, required=True)
+
+
+class ChangeEmailSerializer(serializers.Serializer):
+    new_email = serializers.EmailField(write_only=True, required=True)
+
 
 
 class DeleteUserSerializer(serializers.Serializer):
@@ -135,5 +139,3 @@ class ChangePasswordSerializer(serializers.Serializer):
         if password != password2 and len(password) < 8:
             raise serializers.ValidationError('Пароли не совпадают или меньше 8 символов.')
         return attrs
-
-

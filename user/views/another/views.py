@@ -9,8 +9,22 @@ from django.conf import settings
 import random
 import string
 
+from itsdangerous import URLSafeTimedSerializer
 from user.models import User
 from user.serializers.another.serializers import *
+
+
+def generate_email_token(new_email):
+    serializer = URLSafeTimedSerializer(settings.SECRET_KEY)
+    return serializer.dumps({"new_email": new_email})
+
+def decode_email_token(token):
+    serializer = URLSafeTimedSerializer(settings.SECRET_KEY)
+    try:
+        data = serializer.loads(token, max_age=3600)  # Токен действителен в течение 1 часа
+        return data
+    except Exception as e:
+        return None
 
 
 def decode_token(request):

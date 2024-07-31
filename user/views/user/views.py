@@ -2,8 +2,10 @@ from rest_framework import generics
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework import permissions
-from drf_spectacular.utils import extend_schema, OpenApiParameter
-from django.core.exceptions import ObjectDoesNotExist, ValidationError
+from drf_spectacular.utils import extend_schema
+from urllib.parse import quote
+import test
+
 
 from django.core.mail import send_mail
 import string
@@ -11,7 +13,7 @@ import random
 
 from user.models import User
 from user.serializers.user.serializers import *
-from user.views.another.views import decode_token
+from user.views.another.views import decode_token, generate_email_token, decode_email_token
 
 
 class UserList(generics.GenericAPIView):
@@ -43,13 +45,12 @@ class Registration(generics.CreateAPIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-class Verifei(generics.GenericAPIView):
+class UserEmailVerifey(generics.GenericAPIView):
     serializer_class = VerifySerializer
     permission_classes = [permissions.AllowAny]
 
     def get(self, request, *args, **kwargs):
-
-        user_id_code = kwargs.get('user_id')
+        user_id_code = kwargs.get('code_send')
         user_id = user_id_code[8:-16]
         user = User.objects.get(pk=user_id)
         username = user.username
@@ -90,7 +91,7 @@ class RecoveryPassword(generics.GenericAPIView):
     )
 
     def post(self, request, *args, **kwargs):
-        user_code = kwargs.get('user_id')
+        user_code = kwargs.get('code_send')
         user_id = user_code[8:-16]
         user = User.objects.get(pk=user_id)
         old_password = request.data.get('old_password')
@@ -116,33 +117,66 @@ class RecoveryPassword(generics.GenericAPIView):
                             status=status.HTTP_400_BAD_REQUEST)
 
 
-class ChangeEmail(generics.GenericAPIView):
-    serializer_class = ChangeEmailSerializer
+class ChangeEmailSendMail(generics.GenericAPIView):
+    serializer_class = ChangeEmailSendMailSerializer
     permission_classes = [permissions.IsAuthenticated]
 
+    @extend_schema(
+        description='Вводится новый адрес электронной почты.'
+                    'На новый электронный адрес отправляется письмо с ссылкой на страницу изменения почты.'
+    )
     def post(self, request, *args, **kwargs):
-        now_user = User.objects.get(pk=decode_token(request))
-        old_email = request.data.get('old_email')
+        user = User.objects.get(pk=decode_token(request))
         new_email = request.data.get('new_email')
-        change_email_user = User.objects.get(email=old_email)
-        if now_user == change_email_user:
-            change_email_user.email = new_email
-            change_email_user.save()
-            serializer = UserListSerializer(change_email_user)
-            return Response({
-                'detail': f'Ваш email изменен.',
-                'user': serializer.data,
-            }, status=status.HTTP_200_OK)
-        else:
-            return Response({'detail': 'Некорректно введен старый email.'},
+        if not new_email:
+            return Response({"error": "Новый электронный адрес не был указан"},
                             status=status.HTTP_400_BAD_REQUEST)
+        else:
+            encoded_new_email = generate_email_token(new_email)
+            user_id_code = generate_code(user.pk)
+            subject = "Уведомление о смене email"
+            body = (f"Здравствуйте {user.username}, для смены вашего email пройдите по ссылке "
+                    f"http://127.0.0.1:8000/api/user/change-email/{encoded_new_email}/{user_id_code}")
+            sender = settings.EMAIL_HOST_USER
+            recipients = [new_email]
+            send_mail(subject, body, sender, recipients)
+
+            return Response(f'Пользователь {user.username} хочет поменять электронную почту.', status=status.HTTP_200_OK)
 
 
-# TODO: Доделать
-class SendVerificationMail(generics.GenericAPIView):
 
-    def post(self, request, *args, **kwargs):
-        return Response({'detail': 'ok'})
+class ChangeEmail(generics.GenericAPIView):
+    serializer_class = ChangeEmailSerializer
+    permission_classes = [permissions.AllowAny]
+
+    @extend_schema(
+        description='Функция обрабатывает ссылку с кодированным новым имейлом и пользователем.'
+                    ' Если данные проходят проверки происходит смена электронного адреса пользователя.'
+    )
+    def get(self, request, *args, **kwargs):
+        try:
+            user_id_code = kwargs.get('user_id_code')
+            user_id = user_id_code[8:-16]
+        except (ValueError, TypeError):
+            return Response({"error": "Не корректный код пользователя."}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            user = User.objects.get(pk=user_id)
+        except User.DoesNotExist:
+            return Response({"error": "Пользователь не найден."}, status=status.HTTP_404_NOT_FOUND)
+
+        new_email = kwargs.get('encoded_new_email')
+        try:
+            decode_code = decode_email_token(new_email)
+            new_email = decode_code['new_email']
+        except (ValueError, TypeError):
+            return Response({"error": "Не корректный код смены email."}, status=status.HTTP_400_BAD_REQUEST)
+
+        user.email = new_email
+        user.save()
+        return Response({
+            'detail': f'{user.username} ваш email изменен на {new_email}.'
+        }, status=status.HTTP_200_OK)
 
 
 class DeleteUser(generics.GenericAPIView):
@@ -217,11 +251,3 @@ class ChangePassword(generics.GenericAPIView):
             return Response({
                 'detail': 'Такого пользователя не существует.'
             }, status=status.HTTP_404_NOT_FOUND)
-
-
-class Test(generics.GenericAPIView):
-
-    def get(self, request, *args, **kwargs):
-        username = kwargs
-        print(username)
-        return Response({'detail': 'ok'})
