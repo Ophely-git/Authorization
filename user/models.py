@@ -15,6 +15,7 @@ class User(AbstractUser):
     username = models.CharField(max_length=100, unique=True, blank=False, verbose_name="Имя пользователя")
     email = models.EmailField(unique=True, blank=False, verbose_name="Email")
     verified = models.BooleanField(default=False, verbose_name="Подтверждён")
+    unconfirmed_new_email = models.EmailField(null=True, blank=True)
 
     class Meta:
         ordering = ["username", "verified"]

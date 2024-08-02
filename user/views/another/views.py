@@ -21,7 +21,7 @@ def generate_email_token(new_email):
 def decode_email_token(token):
     serializer = URLSafeTimedSerializer(settings.SECRET_KEY)
     try:
-        data = serializer.loads(token, max_age=3600)  # Токен действителен в течение 1 часа
+        data = serializer.loads(token, max_age=3600)
         return data
     except Exception as e:
         return None

@@ -3,15 +3,14 @@ from rest_framework.response import Response
 from rest_framework import status
 from rest_framework import permissions
 from drf_spectacular.utils import extend_schema
-from urllib.parse import quote
-import test
+from django.template.loader import render_to_string
+from django.utils.html import strip_tags
 
-
-from django.core.mail import send_mail
 import string
 import random
+from django.contrib.auth.models import AbstractUser
+from django.db import models
 
-from user.models import User
 from user.serializers.user.serializers import *
 from user.views.another.views import decode_token, generate_email_token, decode_email_token
 
@@ -122,27 +121,42 @@ class ChangeEmailSendMail(generics.GenericAPIView):
     permission_classes = [permissions.IsAuthenticated]
 
     @extend_schema(
-        description='Вводится новый адрес электронной почты.'
-                    'На новый электронный адрес отправляется письмо с ссылкой на страницу изменения почты.'
+        description=f'Вводится новый адрес электронной почты.'
+                    f'На новый электронный и старый адрес отправляется письмо. '
+                    f'На новый с ссылкой на страницу изменения почты. '
+                    f'На старый сообщении о смене электронной почты.'
     )
     def post(self, request, *args, **kwargs):
-        user = User.objects.get(pk=decode_token(request))
+        user = request.user
         new_email = request.data.get('new_email')
+        current_email = user.email
         if not new_email:
             return Response({"error": "Новый электронный адрес не был указан"},
                             status=status.HTTP_400_BAD_REQUEST)
         else:
+            user.unconfirmed_new_email = new_email
             encoded_new_email = generate_email_token(new_email)
             user_id_code = generate_code(user.pk)
+
+            #Send message to current user email address.
             subject = "Уведомление о смене email"
-            body = (f"Здравствуйте {user.username}, для смены вашего email пройдите по ссылке "
-                    f"http://127.0.0.1:8000/api/user/change-email/{encoded_new_email}/{user_id_code}")
+            url = f"http://127.0.0.1:8000/api/user/change-email/{encoded_new_email}/{user_id_code}"
+            message = (f"Здравствуйте {user.username}, вы хотите изменить вашу электронную почту."
+                    f" В случаи если это были не вы, свяжитесь с командой BigCookingIsland. ")
+            sender = settings.EMAIL_HOST_USER
+            recipients = [current_email]
+            send_mail(subject, message, sender, recipients)
+
+            #Send message to new user email address.
+            subject = "Уведомление о смене email"
+            html_message = render_to_string('user/email_change.html', {'username': user.username, 'url': url})
+            plain_message = strip_tags(html_message)
             sender = settings.EMAIL_HOST_USER
             recipients = [new_email]
-            send_mail(subject, body, sender, recipients)
+            send_mail(subject, plain_message, sender, recipients, html_message=html_message)
 
-            return Response(f'Пользователь {user.username} хочет поменять электронную почту.', status=status.HTTP_200_OK)
-
+            return Response(f'Пользователь {user.username} хочет поменять электронную почту.'
+                            f' URL на подтверждение смены посты был отправлен на новый адрес.', status=status.HTTP_200_OK)
 
 
 class ChangeEmail(generics.GenericAPIView):
@@ -162,11 +176,12 @@ class ChangeEmail(generics.GenericAPIView):
 
         try:
             user = User.objects.get(pk=user_id)
+            print(user.unconfirmed_new_email)
         except User.DoesNotExist:
             return Response({"error": "Пользователь не найден."}, status=status.HTTP_404_NOT_FOUND)
 
-        new_email = kwargs.get('encoded_new_email')
         try:
+            new_email = kwargs.get('encoded_new_email')
             decode_code = decode_email_token(new_email)
             new_email = decode_code['new_email']
         except (ValueError, TypeError):
