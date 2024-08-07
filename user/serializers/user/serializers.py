@@ -112,7 +112,7 @@ class RegistrationSerializer(serializers.Serializer):
 
         user_id = user.pk
         subject = "Подтверждение электронной почты"
-        body = f"Здравствуйте{user.username}, для подтверждения вашей почты, пройдите по следующей ссылке http://localhost:8000/api/user/verified-user-email/{generate_code(user_id=user_id)}"
+        body = f"Здравствуйте{user.username}, для подтверждения вашей почты, пройдите по следующей ссылке http://localhost:8000/api/user/verify-user-email/{generate_code(user_id=user_id)}"
         sender = settings.EMAIL_HOST_USER
         recipients = [user.email]
 
