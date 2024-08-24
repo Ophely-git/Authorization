@@ -7,6 +7,9 @@ __pycache__/**
 **/__pychache/
 db.sqlite3
 media
+Agent
+key
+key.pub
 
 # Backup files #
 *.bak

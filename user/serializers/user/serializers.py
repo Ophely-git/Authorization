@@ -1,11 +1,12 @@
 from django.conf import settings
 from rest_framework import serializers
 from django.core.mail import send_mail
-from django.core.exceptions import ObjectDoesNotExist
 import re
 from user.models import User
 
 from user.views.another.views import generate_code
+
+
 class UserListSerializer(serializers.ModelSerializer):
 
     class Meta:
@@ -30,11 +31,12 @@ class RecoveryPasswordSendMailSerializer(serializers.Serializer):
         username = self.validated_data['username']
         email = self.validated_data['email']
 
-        user = User.objects.get(username = username, email = email)
+        user = User.objects.get(username=username, email=email)
         user_id = user.pk
 
         subject = "Смена пароля"
-        body = f"Здравствуйте {username}, пройдите по следующей ссылке для смены пароля http://localhost:8000/api/user/change-password/{generate_code(user_id=user_id)}"
+        body = (f"Здравствуйте {username}, пройдите по следующей ссылке для смены пароля "
+                f"http://localhost:8000/api/user/change-password/{generate_code(user_id=user_id)}")
         sender = settings.EMAIL_HOST_USER
         recipients = [email]
 
@@ -66,7 +68,6 @@ class ChangeEmailSerializer(serializers.Serializer):
     new_email = serializers.EmailField(write_only=True, required=True)
 
 
-
 class DeleteUserSerializer(serializers.Serializer):
     password = serializers.CharField(write_only=True)
 
@@ -81,10 +82,10 @@ class RegistrationSerializer(serializers.Serializer):
         fields = ('username', 'email', 'password', 'password2')
 
     def validate(self, data, *args, **kwargs):
+        username = data['username']
+        email = data['email']
         password = data['password']
         password2 = data['password2']
-        email = data['email']
-        username = data['username']
 
         if User.objects.filter(username=username).exists():
             raise serializers.ValidationError('Такой юзер уже существует.')
@@ -99,7 +100,6 @@ class RegistrationSerializer(serializers.Serializer):
 
         return data
 
-
     def create(self, validated_data):
         user = User.objects.create_user(
             username=validated_data['username'],
@@ -112,7 +112,8 @@ class RegistrationSerializer(serializers.Serializer):
 
         user_id = user.pk
         subject = "Подтверждение электронной почты"
-        body = f"Здравствуйте{user.username}, для подтверждения вашей почты, пройдите по следующей ссылке http://localhost:8000/api/user/verify-user-email/{generate_code(user_id=user_id)}"
+        body = (f"Здравствуйте{user.username}, для подтверждения вашей почты, пройдите по следующей ссылке "
+                f"http://localhost:8000/api/user/verify-user-email/{generate_code(user_id=user_id)}")
         sender = settings.EMAIL_HOST_USER
         recipients = [user.email]
 
